@@ -34,10 +34,12 @@ function createServer() {
       req.on('end', () => {
         try {
           const contentType = req.headers['content-type'];
-          const isJson =
+          const isJsonRequest =
             contentType && contentType.startsWith('application/json');
 
-          const expense = isJson ? JSON.parse(body) : querystring.parse(body);
+          const expense = isJsonRequest
+            ? JSON.parse(body)
+            : querystring.parse(body);
 
           if (!expense.date || !expense.title || !expense.amount) {
             res.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -49,21 +51,19 @@ function createServer() {
 
           fs.writeFileSync(dataPath, prettyJson);
 
-          if (isJson) {
+          if (isJsonRequest) {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(expense));
           } else {
             const responseHtml = `
-              <!DOCTYPE html>
-              <html>
-                <head><title>Expense Saved</title></head>
-                <body>
-                  <h1>Expense Added Successfully</h1>
-                  <pre>${prettyJson}</pre>
-                  <a href="/">Add another one</a>
-                </body>
-              </html>
-            `;
+        <!DOCTYPE html>
+        <html>
+          <head><meta charset="utf-8"></head>
+          <body>
+            <pre>${prettyJson}</pre>
+          </body>
+        </html>
+      `;
 
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
             res.end(responseHtml);
